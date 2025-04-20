@@ -36,6 +36,8 @@ private:
     bool isCharging = false;  // 是否正在蓄力
     qreal chargeStrength = 0;  // 蓄力程度
     QElapsedTimer chargeTimer;  // 使用 QElapsedTimer
+    QVector<QPointF> pockets; // 袋口位置
+    void checkPockets();      // 检查球是否进袋
 };
 
 #endif // GAMESCENE_H

@@ -8,6 +8,7 @@ int main(int argc, char *argv[]) {
     QGraphicsView view;
     GameScene *scene = new GameScene();
     view.setScene(scene);
+    view.setCursor(Qt::CrossCursor);
     view.setRenderHint(QPainter::Antialiasing);
     view.setWindowTitle("Billiards Game - Step 1");
     view.resize(1300, 800); // 可根据需要缩放显示
