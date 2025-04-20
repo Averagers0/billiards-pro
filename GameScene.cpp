@@ -12,7 +12,6 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     int windowWidth = 1200;
     int windowHeight = 700;
 
-
     // 桌球桌大概边距与坐标参考设定
     pockets = {
         QPointF(60, 60),                       // 左上
@@ -31,8 +30,15 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     table = addPixmap(scaledBg);
     table->setZValue(-1); // 最底层
     table->setPos(0, 0);  // 左上角对齐
-
     initBalls(); // 初始化球
+
+    gameManager = new GameManager(this);
+    connect(gameManager, &GameManager::turnChanged, this, [=](PlayerTurn turn){
+        qDebug() << "现在轮到玩家：" << (turn == Player1 ? "玩家1" : "玩家2");
+    });
+    connect(gameManager, &GameManager::gameOver, this, [=](PlayerTurn winner, QString reason){
+        qDebug() << "🎉 游戏结束，" << (winner == Player1 ? "玩家1" : "玩家2") << " 获胜，原因：" << reason;
+    });
 }
 
 void GameScene::initBalls() {
@@ -86,12 +92,14 @@ void GameScene::initBalls() {
 void GameScene::updatePhysics() {
     const qreal friction = 0.99;
     const qreal minSpeed = 0.1;
-    const qreal maxCharge = 30.0;  // 最大蓄力强度
+    const qreal maxCharge = 30.0;
 
-    // 处理蓄力：根据时间调整 chargeStrength
+    bool allStopped = true; // 新增：标记所有球是否静止
+
+    // 处理蓄力
     if (isCharging) {
-        qreal t = chargeTimer.elapsed() / 1000.0; // 秒
-        chargeStrength = std::min(t * 10.0, maxCharge); // 每秒充10单位，最多 maxCharge
+        qreal t = chargeTimer.elapsed() / 1000.0;
+        chargeStrength = std::min(t * 10.0, maxCharge);
     }
 
     for (Ball *ball : balls) {
@@ -106,17 +114,27 @@ void GameScene::updatePhysics() {
         // 停止判断
         if (std::hypot(ball->velocity.x(), ball->velocity.y()) < minSpeed) {
             ball->velocity = QPointF(0, 0);
+        } else {
+            allStopped = false; // 只要有球在动，就不算静止
         }
-
-
 
         // 边界碰撞
         checkWallCollision(ball);
     }
     checkPockets();
-    // 球与球的碰撞
     handleBallCollisions();
-    update();  // ✅ 强制刷新画面（蓄力条就能每帧更新）
+
+    // 新增：所有球静止且不是正在蓄力时换人
+    static bool wasMoving = false;
+    if (allStopped && !isCharging) {
+        if (wasMoving) {
+            gameManager->nextTurn(false); // 调用游戏管理器的换人逻辑
+            wasMoving = false;
+        }
+    } else {
+        wasMoving = true;
+    }
+    update();
 }
 
 void GameScene::checkWallCollision(Ball *ball) {
@@ -272,8 +290,8 @@ void GameScene::checkPockets() {
             if (QLineF(center, pocket).length() < pocketRadius) {
                 // 如果是白球，特殊处理（犯规）
                 if (dynamic_cast<CueBall*>(ball)) {
-                    qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋（犯规）";
-                    // 处理白球进袋的情况，比如重置白球位置、执行犯规判定等
+                    qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋";
+                    // 你也可以设置白球重置等逻辑
                 } else {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
                     removeItem(ball);
@@ -286,6 +304,3 @@ void GameScene::checkPockets() {
         }
     }
 }
-
-
-
