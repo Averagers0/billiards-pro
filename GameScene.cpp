@@ -286,6 +286,8 @@ void GameScene::checkPockets() {
                     // 你也可以设置白球重置等逻辑
                 } else {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
+                    gameManager->assignBallType(ball->getNumber());
+                    qDebug() << gameManager->playerType(gameManager->currentTurn());
                     removeItem(ball);
                     balls.removeAt(i);
                     gameManager->ballPotted(ball->getNumber(),false);
