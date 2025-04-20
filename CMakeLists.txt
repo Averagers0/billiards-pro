@@ -34,6 +34,10 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         CueBall.cpp
         Ball.cpp
         ColoredBall.cpp
+        GameManager.h
+        GameManager.cpp
+
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET billiards APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
