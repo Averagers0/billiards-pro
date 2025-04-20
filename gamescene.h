@@ -1,0 +1,41 @@
+#ifndef GAMESCENE_H
+#define GAMESCENE_H
+
+#include <QGraphicsScene>
+#include <QGraphicsPixmapItem>
+#include <QGraphicsSceneMouseEvent>
+#include <QTimer>
+#include <QElapsedTimer>  // 引入 QElapsedTimer
+#include "Ball.h"
+#include "CueBall.h"
+#include "EightBall.h"
+#include "SolidBall.h"
+#include "StripedBall.h"
+
+class GameScene : public QGraphicsScene {
+    Q_OBJECT
+public:
+    explicit GameScene(QObject *parent = nullptr);
+    void initBalls();
+    void updatePhysics();
+    void checkWallCollision(Ball *ball);
+    void handleBallCollisions();
+
+protected:
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override;
+    void drawForeground(QPainter *painter, const QRectF &rect) override;
+
+private:
+    QTimer *timer;
+    QGraphicsPixmapItem *table;
+    QVector<Ball*> balls;
+
+    QPointF aimPoint;  // 准星位置
+    bool isCharging = false;  // 是否正在蓄力
+    qreal chargeStrength = 0;  // 蓄力程度
+    QElapsedTimer chargeTimer;  // 使用 QElapsedTimer
+};
+
+#endif // GAMESCENE_H

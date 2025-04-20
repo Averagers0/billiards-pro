@@ -1,0 +1,23 @@
+<RCC>
+    <qresource prefix="/assets">
+        <file>assets/ball1.png</file>
+        <file>assets/ball2.png</file>
+        <file>assets/ball3.png</file>
+        <file>assets/ball4.png</file>
+        <file>assets/ball5.png</file>
+        <file>assets/ball6.png</file>
+        <file>assets/ball7.png</file>
+        <file>assets/ball8.png</file>
+        <file>assets/ball9.png</file>
+        <file>assets/ball10.png</file>
+        <file>assets/ball11.png</file>
+        <file>assets/ball12.png</file>
+        <file>assets/ball13.png</file>
+        <file>assets/ball14.png</file>
+        <file>assets/ball15.png</file>
+        <file>assets/ball16.png</file>
+        <file>assets/cue.png</file>
+        <file>assets/table.png</file>
+        <file>assets/triangle.png</file>
+    </qresource>
+</RCC>

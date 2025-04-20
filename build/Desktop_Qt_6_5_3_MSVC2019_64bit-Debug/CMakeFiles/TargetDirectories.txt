@@ -1,0 +1,8 @@
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/billiards.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/edit_cache.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/rebuild_cache.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/list_install_components.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/install.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/install/local.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/billiards_autogen_timestamp_deps.dir
+D:/Development/Qt/billiards/build/Desktop_Qt_6_5_3_MSVC2019_64bit-Debug/CMakeFiles/billiards_autogen.dir
