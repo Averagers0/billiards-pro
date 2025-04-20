@@ -124,16 +124,7 @@ void GameScene::updatePhysics() {
     checkPockets();
     handleBallCollisions();
 
-    // 新增：所有球静止且不是正在蓄力时换人
-    static bool wasMoving = false;
-    if (allStopped && !isCharging) {
-        if (wasMoving) {
-            gameManager->nextTurn(false); // 调用游戏管理器的换人逻辑
-            wasMoving = false;
-        }
-    } else {
-        wasMoving = true;
-    }
+    handleTurnChange(allStopped);
     update();
 }
 
@@ -291,16 +282,41 @@ void GameScene::checkPockets() {
                 // 如果是白球，特殊处理（犯规）
                 if (dynamic_cast<CueBall*>(ball)) {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋";
+                    handleTurnChange(true);
                     // 你也可以设置白球重置等逻辑
                 } else {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
                     removeItem(ball);
                     balls.removeAt(i);
+                    gameManager->ballPotted(ball->getNumber(),false);
+                    qDebug() << gameManager->getSolidLeft() << " " << gameManager->getStripedLeft();
                     delete ball;
                 }
 
                 break; // 进袋后跳出检查
             }
         }
+    }
+}
+
+void GameScene::handleTurnChange(bool allStopped) {
+    // 情况1：发生犯规（立即处理，无视是否静止）
+    if (foulOccurred) {
+        gameManager->nextTurn(true); // 犯规换人
+        foulOccurred = false;       // 重置标记
+        wasMoving = false;          // 防止静止检测重复触发
+        return;
+    }
+
+    // 情况2：无犯规 + 所有静止 + 不在蓄力
+    if (allStopped && !isCharging) {
+        if (wasMoving) {
+            gameManager->nextTurn(false); // 正常换人
+            wasMoving = false;
+        }
+    }
+    // 情况3：有球在移动
+    else {
+        wasMoving = true;
     }
 }

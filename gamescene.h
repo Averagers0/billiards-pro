@@ -22,6 +22,7 @@ public:
     void checkWallCollision(Ball *ball);
     void handleBallCollisions();
     bool anyBallMoving() const;
+    void handleTurnChange(bool shouldChangeTurn);
 
 protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
@@ -43,8 +44,9 @@ private:
     bool turnOverHandled = false;  // 标志：该回合是否已经处理过 turnEnded
     // 添加成员变量
     GameManager *gameManager;
+
     bool foulOccurred = false;
-    QList<int> pottedThisTurn;
+    bool wasMoving = false;
 };
 
 #endif // GAMESCENE_H

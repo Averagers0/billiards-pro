@@ -21,6 +21,9 @@ public:
     PlayerType currentPlayerType() const;
     PlayerType playerType(PlayerTurn player) const;
 
+    int getSolidLeft(){return this->solidLeft;}
+    int getStripedLeft(){return this->stripedLeft;}
+
 signals:
     void turnChanged(PlayerTurn turn);
     void gameOver(PlayerTurn winner, QString reason);
