@@ -123,8 +123,8 @@ void GameScene::checkWallCollision(Ball *ball) {
     }
 
     // 碰上
-    if (pos.y() - r <= bounds.top() + 45) {
-        pos.setY(bounds.top() + 45 + r);
+    if (pos.y() - r <= bounds.top() + 50) {
+        pos.setY(bounds.top() + 50 + r);
         v.setY(-v.y());
     }
     // 碰下
@@ -179,6 +179,11 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
         update(); // 触发界面刷新（蓄力条会消失）
         return;
     }
+
+    // 👉 白球没停下就不能蓄力
+    Ball *cue = balls[0];
+    if (cue->velocity != QPointF(0, 0)) return;
+
     isCharging = true;
     chargeStrength = 0;
     aimPoint = event->scenePos();  // 记录准星位置
