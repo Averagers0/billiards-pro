@@ -11,6 +11,7 @@
 #include "EightBall.h"
 #include "SolidBall.h"
 #include "StripedBall.h"
+#include "GameManager.h"
 
 class GameScene : public QGraphicsScene {
     Q_OBJECT
@@ -20,6 +21,7 @@ public:
     void updatePhysics();
     void checkWallCollision(Ball *ball);
     void handleBallCollisions();
+    bool anyBallMoving() const;
 
 protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
@@ -38,6 +40,11 @@ private:
     QElapsedTimer chargeTimer;  // 使用 QElapsedTimer
     QVector<QPointF> pockets; // 袋口位置
     void checkPockets();      // 检查球是否进袋
+    bool turnOverHandled = false;  // 标志：该回合是否已经处理过 turnEnded
+    // 添加成员变量
+    GameManager *gameManager;
+    bool foulOccurred = false;
+    QList<int> pottedThisTurn;
 };
 
 #endif // GAMESCENE_H
