@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QGraphicsSceneMouseEvent>
 #include <cmath>
+#include <QDateTime>
 
 GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     timer = new QTimer(this);
@@ -10,6 +11,17 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
 
     int windowWidth = 1200;
     int windowHeight = 700;
+
+
+    // 桌球桌大概边距与坐标参考设定
+    pockets = {
+        QPointF(60, 60),                       // 左上
+        QPointF(windowWidth / 2 + 10, 55),         // 中上
+        QPointF(windowWidth - 30, 60),        // 右上
+        QPointF(60, windowHeight - 60),       // 左下
+        QPointF(windowWidth / 2 + 10, windowHeight - 55), // 中下
+        QPointF(windowWidth - 30, windowHeight - 60) // 右下
+    };
 
     setSceneRect(0, 0, windowWidth, windowHeight);
 
@@ -96,10 +108,12 @@ void GameScene::updatePhysics() {
             ball->velocity = QPointF(0, 0);
         }
 
+
+
         // 边界碰撞
         checkWallCollision(ball);
     }
-
+    checkPockets();
     // 球与球的碰撞
     handleBallCollisions();
     update();  // ✅ 强制刷新画面（蓄力条就能每帧更新）
@@ -215,6 +229,13 @@ void GameScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
 void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     Q_UNUSED(rect);
+
+    // ✅ 临时绘制洞口位置（用于测试）
+    painter->setPen(QPen(Qt::green, 2));  // 绿色空心圆
+    for (const QPointF &pocket : pockets) {
+        painter->drawEllipse(pocket, 35, 35);  // 和 checkPockets 一致的口径
+    }
+
     if (!isCharging) return;  // 🧠 没在蓄力就别画任何辅助图层
 
     Ball *cue = balls[0];
@@ -239,4 +260,32 @@ void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     painter->setBrush(Qt::blue);
     painter->drawRect(QRectF(barPos, QSizeF(chargeStrength / 20.0 * barW, barH)));
 }
+
+void GameScene::checkPockets() {
+    const int pocketRadius = 35;
+
+    for (int i = balls.size() - 1; i >= 0; --i) {
+        Ball *ball = balls[i];
+        QPointF center = ball->pos() + QPointF(ball->radius(), ball->radius());
+
+        for (const QPointF &pocket : pockets) {
+            if (QLineF(center, pocket).length() < pocketRadius) {
+                // 如果是白球，特殊处理（犯规）
+                if (dynamic_cast<CueBall*>(ball)) {
+                    qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋（犯规）";
+                    // 处理白球进袋的情况，比如重置白球位置、执行犯规判定等
+                } else {
+                    qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
+                    removeItem(ball);
+                    balls.removeAt(i);
+                    delete ball;
+                }
+
+                break; // 进袋后跳出检查
+            }
+        }
+    }
+}
+
+
 
