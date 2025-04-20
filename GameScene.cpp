@@ -109,20 +109,34 @@ void GameScene::checkWallCollision(Ball *ball) {
     QRectF bounds = sceneRect();
     QPointF pos = ball->pos();
     QPointF v = ball->velocity;
-    int r = ball->radius(); // 半径
+    int r = ball->radius();
 
-    // 碰左或右
-    if (pos.x() - r <= bounds.left() + 30 || pos.x() + r >= bounds.right() - 30) {
+    // 碰左
+    if (pos.x() - r <= bounds.left() + 50) {
+        pos.setX(bounds.left() + 50 + r);
+        v.setX(-v.x());
+    }
+    // 碰右
+    else if (pos.x() + r >= bounds.right() - 35) {
+        pos.setX(bounds.right() - 35 - r);
         v.setX(-v.x());
     }
 
-    // 碰上或下
-    if (pos.y() - r <= bounds.top() + 45 || pos.y() + r >= bounds.bottom() - 70 ) {
+    // 碰上
+    if (pos.y() - r <= bounds.top() + 45) {
+        pos.setY(bounds.top() + 45 + r);
+        v.setY(-v.y());
+    }
+    // 碰下
+    else if (pos.y() + r >= bounds.bottom() - 80) {
+        pos.setY(bounds.bottom() - 80 - r);
         v.setY(-v.y());
     }
 
+    ball->setPos(pos);
     ball->velocity = v;
 }
+
 
 void GameScene::handleBallCollisions() {
     for (int i = 0; i < balls.size(); ++i) {
@@ -196,6 +210,8 @@ void GameScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
 
 void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     Q_UNUSED(rect);
+    if (!isCharging) return;  // 🧠 没在蓄力就别画任何辅助图层
+
     Ball *cue = balls[0];
     QPointF cueCenter = cue->pos() + QPointF(cue->pixmap().width() / 2, cue->pixmap().height() / 2);
 
@@ -204,19 +220,18 @@ void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     painter->setBrush(Qt::red);
     painter->drawEllipse(aimPoint, 5, 5);
 
-    if (isCharging) {
-        // 画辅助线（白球 → 准星方向）
-        QPen pen(Qt::green, 2, Qt::DashLine);
-        painter->setPen(pen);
-        painter->drawLine(cueCenter, aimPoint);
+    // 画辅助线
+    QPen pen(Qt::gray, 2, Qt::DashLine);
+    painter->setPen(pen);
+    painter->drawLine(cueCenter, aimPoint);
 
-        // 蓄力条
-        int barW = 100, barH = 8;
-        QPointF barPos = cueCenter + QPointF(-barW / 2, -50);
+    // 画蓄力条
+    int barW = 100, barH = 8;
+    QPointF barPos = cueCenter + QPointF(-barW / 2, -50);
 
-        painter->setBrush(Qt::gray);
-        painter->drawRect(QRectF(barPos, QSizeF(barW, barH)));
-        painter->setBrush(Qt::blue);
-        painter->drawRect(QRectF(barPos, QSizeF(chargeStrength / 20.0 * barW, barH)));
-    }
+    painter->setBrush(Qt::gray);
+    painter->drawRect(QRectF(barPos, QSizeF(barW, barH)));
+    painter->setBrush(Qt::blue);
+    painter->drawRect(QRectF(barPos, QSizeF(chargeStrength / 20.0 * barW, barH)));
 }
+
