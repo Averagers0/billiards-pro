@@ -31,7 +31,6 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     playerInfoText->setZValue(1); // 确保在前面
     playerInfoText->setPos(-50, -50); // 放在左上角
     addItem(playerInfoText);
-
     // 初始化内容
     playerInfoText->setPlainText("当前玩家: 玩家1");
 
@@ -218,7 +217,6 @@ void GameScene::handleBallCollisions() {
                         if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) != d->getType()){
                             qDebug()<< "test" << c->getNumber();
                             qDebug() << "test" << d->getNumber();
-                            gameManager->firstHitRecorded = true;
                             foulOccurred = true;
                         }
                     }
@@ -368,11 +366,19 @@ void GameScene::handleTurnChange(bool allStopped) {
                 return;
             }
             else if(cueBallInPocket){
+
+                qDebug() << "犯规,白球进洞";
+                gameManager->nextTurn(true); // 犯规换人
+                foulOccurred = false;
+                wasMoving = false;
+                gameManager->setLink(true);
+
                 cueBall->setPos(1000 * sceneRect().width() / 4551.0,
                                 (1285 - cueBall->radius()) * sceneRect().height() / 2570.0);
                 cueBall->velocity = QPointF(0, 0);
 
                 cueBallInPocket = false;
+                return;
             }
             else{
                 qDebug() << "犯规";
@@ -397,4 +403,5 @@ void GameScene::handleTurnChange(bool allStopped) {
         wasMoving = false;
     }
 }
+
 

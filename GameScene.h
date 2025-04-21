@@ -21,7 +21,6 @@ public:
     void updatePhysics();
     void checkWallCollision(Ball *ball);
     void handleBallCollisions();
-    bool anyBallMoving() const;
     void handleTurnChange(bool shouldChangeTurn);
 
 protected:
@@ -37,7 +36,7 @@ private:
     CueBall* cueBall = nullptr;
 
     bool cueBallInPocket = false;
-    bool isPlacingCueBall = false;
+    bool isPlacingCueBall = false; //目前没有用到
 
     QPointF aimPoint;  // 准星位置
     bool isCharging = false;  // 是否正在蓄力
@@ -45,7 +44,7 @@ private:
     QElapsedTimer chargeTimer;  // 使用 QElapsedTimer
     QVector<QPointF> pockets; // 袋口位置
     void checkPockets();      // 检查球是否进袋
-    bool turnOverHandled = false;  // 标志：该回合是否已经处理过 turnEnded
+
     // 添加成员变量
     GameManager *gameManager;
 
