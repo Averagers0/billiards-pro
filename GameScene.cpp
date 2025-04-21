@@ -332,7 +332,7 @@ void GameScene::handleTurnChange(bool allStopped) {
     }
 
     // 情况2：无犯规 + 所有静止 + 不在蓄力
-    if (allStopped && !isCharging) {
+    if (allStopped) {
         if (wasMoving) {
             if(gameManager->getLink()){
                 gameManager->setLink(false);
