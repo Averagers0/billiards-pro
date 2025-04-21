@@ -24,6 +24,17 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
 
     setSceneRect(0, 0, windowWidth, windowHeight);
 
+    QGraphicsTextItem *playerInfoText;
+    playerInfoText = new QGraphicsTextItem();
+    playerInfoText->setDefaultTextColor(Qt::white);
+    playerInfoText->setFont(QFont("Arial", 16, QFont::Bold));
+    playerInfoText->setZValue(1); // 确保在前面
+    playerInfoText->setPos(10, 10); // 放在左上角
+    addItem(playerInfoText);
+
+    // 初始化内容
+    playerInfoText->setPlainText("当前玩家: 玩家1");
+
     // 缩放背景图以适配窗口
     QPixmap bg(":/assets/assets/table.png");
     QPixmap scaledBg = bg.scaled(windowWidth, windowHeight, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
@@ -33,8 +44,10 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     initBalls(); // 初始化球
 
     gameManager = new GameManager(this);
+
     connect(gameManager, &GameManager::turnChanged, this, [=](PlayerTurn turn){
         qDebug() << "现在轮到玩家：" << (turn == Player1 ? "玩家1" : "玩家2");
+        playerInfoText->setPlainText(QString("当前玩家: %1").arg(turn == Player1 ? "玩家1" : "玩家2"));
     });
     connect(gameManager, &GameManager::gameOver, this, [=](PlayerTurn winner, QString reason){
         qDebug() << "🎉 游戏结束，" << (winner == Player1 ? "玩家1" : "玩家2") << " 获胜，原因：" << reason;
