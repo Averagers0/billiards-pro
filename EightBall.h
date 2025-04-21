@@ -5,7 +5,7 @@ class EightBall : public ColoredBall {
 public:
     EightBall(qreal x, qreal y, qreal size)
         : ColoredBall(8, QString(":/assets/assets/ball8.png"), x, y, size) {}
-    QString getType() const override { return "eight"; }
+    QString getType() const override { return "Eight"; }
 };
 
 #endif // EIGHTBALL_H

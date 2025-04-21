@@ -57,7 +57,7 @@ void GameScene::initBalls() {
     qreal cueX = 1000 * scaleX;
     qreal cueY = (1285 - scaledSize / 2) * scaleY;
 
-    Ball *cueBall = new CueBall(cueX, cueY, scaledSize);
+    cueBall = new CueBall(cueX, cueY, scaledSize);
     addItem(cueBall);
     balls.append(cueBall);
 
@@ -204,7 +204,7 @@ void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
     }
 
     // 👉 白球没停下就不能蓄力
-    Ball *cue = balls[0];
+    Ball *cue = cueBall;
     if (cue->velocity != QPointF(0, 0)) return;
 
     isCharging = true;
@@ -223,7 +223,7 @@ void GameScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     if (!isCharging) return;
 
     // 计算击球方向
-    Ball *cue = balls[0];  // 白球
+    Ball *cue = cueBall;  // 白球
     QPointF cueCenter = cue->pos() + QPointF(cue->pixmap().width()/2, cue->pixmap().height()/2);
     QPointF dir = aimPoint - cueCenter;
     qreal dist = std::hypot(dir.x(), dir.y());
@@ -247,7 +247,7 @@ void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
 
     if (!isCharging) return;  // 🧠 没在蓄力就别画任何辅助图层
 
-    Ball *cue = balls[0];
+    Ball *cue = cueBall;
     QPointF cueCenter = cue->pos() + QPointF(cue->pixmap().width() / 2, cue->pixmap().height() / 2);
 
     // 画准星
@@ -282,12 +282,24 @@ void GameScene::checkPockets() {
                 // 如果是白球，特殊处理（犯规）
                 if (dynamic_cast<CueBall*>(ball)) {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋";
-                    handleTurnChange(true);
-                    // 你也可以设置白球重置等逻辑
+                    foulOccurred = true;
+
+                    // 隐藏白球（移出画面）
+                    ball->setPos(-100, -100);
+                    ball->velocity = QPointF(0, 0);
+                    cueBallInPocket = true; // 添加这个变量用于重置时判断
+
                 } else {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
                     gameManager->assignBallType(ball->getNumber());
-                    qDebug() << gameManager->playerType(gameManager->currentTurn());
+
+                    qDebug() << gameManager->currentPlayerType();
+                    if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) == ball->getType() && !foulOccurred){
+                        qDebug()<< gameManager->PlayerTypeToString(gameManager->currentPlayerType()) ;
+                        qDebug() << ball->getType();
+                        gameManager->setLink(true);
+                    }
+
                     removeItem(ball);
                     balls.removeAt(i);
                     gameManager->ballPotted(ball->getNumber(),false);
@@ -302,12 +314,23 @@ void GameScene::checkPockets() {
 }
 
 void GameScene::handleTurnChange(bool allStopped) {
-    // 情况1：发生犯规（立即处理，无视是否静止）
-    if (foulOccurred) {
-        gameManager->nextTurn(true); // 犯规换人
-        foulOccurred = false;       // 重置标记
-        wasMoving = false;          // 防止静止检测重复触发
-        return;
+    // 情况1：发生犯规
+    if (foulOccurred && allStopped) {
+        if(wasMoving){
+            qDebug() << "犯规";
+            gameManager->nextTurn(true); // 犯规换人
+            foulOccurred = false;       // 重置标记
+            wasMoving = false;          // 防止静止检测重复触发
+
+            if (cueBallInPocket) {
+                cueBall->setPos(1000 * sceneRect().width() / 4551.0,
+                                (1285 - cueBall->radius()) * sceneRect().height() / 2570.0);
+                cueBall->velocity = QPointF(0, 0);
+                cueBallInPocket = false;
+            }
+
+            return;
+        }
     }
 
     // 情况2：无犯规 + 所有静止 + 不在蓄力

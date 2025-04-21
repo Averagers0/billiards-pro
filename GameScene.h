@@ -34,6 +34,10 @@ private:
     QTimer *timer;
     QGraphicsPixmapItem *table;
     QVector<Ball*> balls;
+    CueBall* cueBall = nullptr;
+
+    bool cueBallInPocket = false;
+    bool isPlacingCueBall = false;
 
     QPointF aimPoint;  // 准星位置
     bool isCharging = false;  // 是否正在蓄力
@@ -47,6 +51,7 @@ private:
 
     bool foulOccurred = false;
     bool wasMoving = false;
+
 };
 
 #endif // GAMESCENE_H

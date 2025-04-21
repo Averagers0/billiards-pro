@@ -24,6 +24,16 @@ public:
     int getSolidLeft(){return this->solidLeft;}
     int getStripedLeft(){return this->stripedLeft;}
 
+    bool getLink(){return this->link;}
+    void setLink(bool flag){this->link = flag;}
+
+    QString PlayerTypeToString(PlayerType type) {
+        static const QString strings[] = {
+            "NoneType", "Solid", "Striped"
+        };
+        return strings[type];
+    }
+
 signals:
     void turnChanged(PlayerTurn turn);
     void gameOver(PlayerTurn winner, QString reason);
@@ -36,5 +46,7 @@ private:
     bool isAssigned;
     int solidLeft;
     int stripedLeft;
+    bool link = false;
+
 };
 #endif // GAMEMANAGER_H

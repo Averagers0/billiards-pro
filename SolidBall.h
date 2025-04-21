@@ -5,7 +5,7 @@ class SolidBall : public ColoredBall {
 public:
     SolidBall(int number, qreal x, qreal y, qreal size)
         : ColoredBall(number, QString(":/assets/assets/ball%1.png").arg(number), x, y, size) {}
-    QString getType() const override { return "solid"; }
+    QString getType() const override { return "Solid"; }
 };
 
 #endif // SOLIDBALL_H
