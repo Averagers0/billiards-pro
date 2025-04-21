@@ -26,10 +26,10 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
 
     QGraphicsTextItem *playerInfoText;
     playerInfoText = new QGraphicsTextItem();
-    playerInfoText->setDefaultTextColor(Qt::white);
+    playerInfoText->setDefaultTextColor(Qt::black);
     playerInfoText->setFont(QFont("Arial", 16, QFont::Bold));
     playerInfoText->setZValue(1); // 确保在前面
-    playerInfoText->setPos(10, 10); // 放在左上角
+    playerInfoText->setPos(-50, -50); // 放在左上角
     addItem(playerInfoText);
 
     // 初始化内容
@@ -173,7 +173,6 @@ void GameScene::checkWallCollision(Ball *ball) {
     ball->velocity = v;
 }
 
-
 void GameScene::handleBallCollisions() {
     for (int i = 0; i < balls.size(); ++i) {
         for (int j = i + 1; j < balls.size(); ++j) {
@@ -201,6 +200,28 @@ void GameScene::handleBallCollisions() {
                     QPointF correction = normal * (overlap / 2.0);
                     a->setPos(a->pos() - correction);
                     b->setPos(b->pos() + correction);
+                }
+
+                Ball *c;
+                Ball *d;
+                if(a->getType() == "cue" || b->getType() == "cue"){
+                    if(a->getType() == "cue"){
+                        c = a;
+                        d = b;
+                    }
+                    else{
+                        c = b;
+                        d = a;
+                    }
+
+                    if(!gameManager->firstHitRecorded && gameManager->currentPlayerType() != 0){
+                        if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) != d->getType()){
+                            qDebug()<< "test" << c->getNumber();
+                            qDebug() << "test" << d->getNumber();
+                            gameManager->firstHitRecorded = true;
+                            foulOccurred = true;
+                        }
+                    }
                 }
             }
         }
@@ -325,40 +346,55 @@ void GameScene::checkPockets() {
 }
 
 void GameScene::handleTurnChange(bool allStopped) {
-    // 情况1：发生犯规
-    if (foulOccurred && allStopped) {
-        if(wasMoving){
-            qDebug() << "犯规";
-            gameManager->nextTurn(true); // 犯规换人
-            foulOccurred = false;       // 重置标记
-            wasMoving = false;          // 防止静止检测重复触发
-            gameManager->setLink(true);
+    // 处理球移动状态
+    if (!allStopped) {
+        wasMoving = true;
+        return;
+    }
 
-            if (cueBallInPocket) {
+    // 所有球都静止了，但之前有移动
+    if (wasMoving) {
+        // 情况2：发生犯规（未记录第一击球或其它犯规）
+        if (foulOccurred) {
+            if(gameManager->firstHitRecorded){
+                qDebug() << "犯规，打错球了";
+                gameManager->nextTurn(true); // 犯规换人
+
+                foulOccurred = false;
+                gameManager->firstHitRecorded = false;
+                wasMoving = false;
+                gameManager->setLink(true);
+
+                return;
+            }
+            else if(cueBallInPocket){
                 cueBall->setPos(1000 * sceneRect().width() / 4551.0,
                                 (1285 - cueBall->radius()) * sceneRect().height() / 2570.0);
                 cueBall->velocity = QPointF(0, 0);
+
                 cueBallInPocket = false;
             }
+            else{
+                qDebug() << "犯规";
+                gameManager->nextTurn(true); // 犯规换人
 
+                foulOccurred = false;
+                wasMoving = false;
+                gameManager->setLink(true);
+            }
             return;
         }
-    }
 
-    // 情况2：无犯规 + 所有静止 + 不在蓄力
-    if (allStopped) {
-        if (wasMoving) {
-            if(gameManager->getLink()){
-                gameManager->setLink(false);
-                wasMoving = false;
-                return;
-            }
-            gameManager->nextTurn(false); // 正常换人
+        // 情况3：连续击球状态
+        if (gameManager->getLink()) {
+            gameManager->setLink(false);
             wasMoving = false;
+            return;
         }
-    }
-    // 情况3：有球在移动
-    else {
-        wasMoving = true;
+
+        // 情况4：正常换人
+        gameManager->nextTurn(false);
+        wasMoving = false;
     }
 }
+

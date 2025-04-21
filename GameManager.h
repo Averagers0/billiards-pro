@@ -34,6 +34,9 @@ public:
         return strings[type];
     }
 
+    bool firstHitRecorded = false;
+
+
 signals:
     void turnChanged(PlayerTurn turn);
     void gameOver(PlayerTurn winner, QString reason);
