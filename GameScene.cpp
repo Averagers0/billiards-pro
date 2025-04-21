@@ -332,6 +332,7 @@ void GameScene::handleTurnChange(bool allStopped) {
             gameManager->nextTurn(true); // 犯规换人
             foulOccurred = false;       // 重置标记
             wasMoving = false;          // 防止静止检测重复触发
+            gameManager->setLink(true);
 
             if (cueBallInPocket) {
                 cueBall->setPos(1000 * sceneRect().width() / 4551.0,
