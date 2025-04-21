@@ -293,10 +293,8 @@ void GameScene::checkPockets() {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
                     gameManager->assignBallType(ball->getNumber());
 
-                    qDebug() << gameManager->currentPlayerType();
                     if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) == ball->getType() && !foulOccurred){
                         qDebug()<< gameManager->PlayerTypeToString(gameManager->currentPlayerType()) ;
-                        qDebug() << ball->getType();
                         gameManager->setLink(true);
                     }
 
@@ -336,6 +334,11 @@ void GameScene::handleTurnChange(bool allStopped) {
     // 情况2：无犯规 + 所有静止 + 不在蓄力
     if (allStopped && !isCharging) {
         if (wasMoving) {
+            if(gameManager->getLink()){
+                gameManager->setLink(false);
+                wasMoving = false;
+                return;
+            }
             gameManager->nextTurn(false); // 正常换人
             wasMoving = false;
         }
