@@ -42,10 +42,22 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     table->setPos(0, 0);  // 左上角对齐
     initBalls(); // 初始化球
 
+    // 初始化提示文字
+    hintTextItem = new QGraphicsTextItem();
+    hintTextItem->setDefaultTextColor(Qt::blue);
+    hintTextItem->setFont(QFont("Arial", 24, QFont::Bold));
+    hintTextItem->setZValue(2);
+    hintTextItem->setOpacity(0);  // 初始不可见
+    hintTextItem->setPos(500, 100); // 居中偏上
+    addItem(hintTextItem);
+
+    hintAnimation = new QPropertyAnimation(hintTextItem, "opacity");
+
     gameManager = new GameManager(this);
 
     connect(gameManager, &GameManager::turnChanged, this, [=](PlayerTurn turn){
         qDebug() << "现在轮到玩家：" << (turn == Player1 ? "玩家1" : "玩家2");
+        showHint(QString("玩家%1回合").arg(turn == Player1 ? "1" : "2"),500);
         playerInfoText->setPlainText(QString("当前玩家: %1").arg(turn == Player1 ? "玩家1" : "玩家2"));
     });
     connect(gameManager, &GameManager::gameOver, this, [=](PlayerTurn winner, QString reason){
@@ -314,7 +326,6 @@ void GameScene::checkPockets() {
             if (QLineF(center, pocket).length() < pocketRadius) {
                 // 如果是白球，特殊处理（犯规）
                 if (dynamic_cast<CueBall*>(ball)) {
-                    qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "白球进袋";
                     foulOccurred = true;
 
                     // 隐藏白球（移出画面）
@@ -324,6 +335,7 @@ void GameScene::checkPockets() {
 
                 } else {
                     qDebug() << QDateTime::currentDateTime().toString("hh:mm:ss.zzz") << "球进袋，编号:" << ball->getNumber();
+                    showHint(QString("球进袋，编号:%1").arg(ball->getNumber()),500);
                     gameManager->assignBallType(ball->getNumber());
 
                     if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) == ball->getType() && !foulOccurred){
@@ -357,7 +369,10 @@ void GameScene::handleTurnChange(bool allStopped) {
         if (foulOccurred) {
             if(gameManager->firstHitRecorded){
                 qDebug() << "犯规，打错球了";
-                gameManager->nextTurn(true); // 犯规换人
+                showHint("犯规，打错球了",500);
+                QTimer::singleShot(1000, this, [=]() {
+                    gameManager->nextTurn(true); // 犯规换人
+                });
 
                 foulOccurred = false;
                 gameManager->firstHitRecorded = false;
@@ -369,7 +384,11 @@ void GameScene::handleTurnChange(bool allStopped) {
             else if(cueBallInPocket){
 
                 qDebug() << "犯规,白球进洞";
-                gameManager->nextTurn(true); // 犯规换人
+                showHint("犯规，白球进洞，请下个玩家放置白球",500);
+
+                QTimer::singleShot(1000, this, [=]() {
+                    gameManager->nextTurn(true); // 犯规换人
+                });
 
                 foulOccurred = false;
                 gameManager->firstHitRecorded = false;
@@ -385,7 +404,10 @@ void GameScene::handleTurnChange(bool allStopped) {
             }
             else{
                 qDebug() << "犯规";
-                gameManager->nextTurn(true); // 犯规换人
+                showHint(QString("犯规"),500);
+                QTimer::singleShot(1000, this, [=]() {
+                    gameManager->nextTurn(true); // 犯规换人
+                });
 
                 foulOccurred = false;
                 gameManager->firstHitRecorded = false;
@@ -397,6 +419,7 @@ void GameScene::handleTurnChange(bool allStopped) {
 
         // 情况3：连续击球状态
         if (gameManager->getLink()) {
+            showHint("连杆机会",500);
             gameManager->setLink(false);
             gameManager->firstHitRecorded = false;
             wasMoving = false;
@@ -410,4 +433,23 @@ void GameScene::handleTurnChange(bool allStopped) {
     }
 }
 
+void GameScene::showHint(const QString &text, int duration) {
+    hintTextItem->setPlainText(text);
+    hintAnimation->stop();
+
+    // 设置淡入
+    hintAnimation->setDuration(500);
+    hintAnimation->setStartValue(0);
+    hintAnimation->setEndValue(1);
+    hintAnimation->start();
+
+    // 延时后淡出
+    QTimer::singleShot(duration, this, [=]() {
+        hintAnimation->stop();
+        hintAnimation->setDuration(500);
+        hintAnimation->setStartValue(1);
+        hintAnimation->setEndValue(0);
+        hintAnimation->start();
+    });
+}
 

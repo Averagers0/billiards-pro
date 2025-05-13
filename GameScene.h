@@ -6,6 +6,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QTimer>
 #include <QElapsedTimer>  // 引入 QElapsedTimer
+#include <QPropertyAnimation>
 #include "Ball.h"
 #include "CueBall.h"
 #include "EightBall.h"
@@ -22,6 +23,8 @@ public:
     void checkWallCollision(Ball *ball);
     void handleBallCollisions();
     void handleTurnChange(bool shouldChangeTurn);
+
+    void showHint(const QString &text, int duration);
 
 protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
@@ -50,6 +53,9 @@ private:
 
     bool foulOccurred = false;
     bool wasMoving = false;
+
+    QGraphicsTextItem *hintTextItem;
+    QPropertyAnimation *hintAnimation;
 
 };
 
