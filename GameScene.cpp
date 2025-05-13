@@ -214,6 +214,7 @@ void GameScene::handleBallCollisions() {
                     }
 
                     if(!gameManager->firstHitRecorded && gameManager->currentPlayerType() != 0){
+                        gameManager->firstHitRecorded = true;
                         if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) != d->getType()){
                             qDebug()<< "test" << c->getNumber();
                             qDebug() << "test" << d->getNumber();
@@ -369,7 +370,9 @@ void GameScene::handleTurnChange(bool allStopped) {
 
                 qDebug() << "犯规,白球进洞";
                 gameManager->nextTurn(true); // 犯规换人
+
                 foulOccurred = false;
+                gameManager->firstHitRecorded = false;
                 wasMoving = false;
                 gameManager->setLink(true);
 
@@ -385,6 +388,7 @@ void GameScene::handleTurnChange(bool allStopped) {
                 gameManager->nextTurn(true); // 犯规换人
 
                 foulOccurred = false;
+                gameManager->firstHitRecorded = false;
                 wasMoving = false;
                 gameManager->setLink(true);
             }
@@ -394,11 +398,13 @@ void GameScene::handleTurnChange(bool allStopped) {
         // 情况3：连续击球状态
         if (gameManager->getLink()) {
             gameManager->setLink(false);
+            gameManager->firstHitRecorded = false;
             wasMoving = false;
             return;
         }
 
         // 情况4：正常换人
+        gameManager->firstHitRecorded = false;
         gameManager->nextTurn(false);
         wasMoving = false;
     }
