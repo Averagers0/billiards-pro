@@ -5,10 +5,12 @@
 #include <QDateTime>
 
 GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
+    //帧
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &GameScene::updatePhysics);
     timer->start(16); // 60帧左右
 
+    //界面大小设置
     int windowWidth = 1200;
     int windowHeight = 700;
 
@@ -22,8 +24,10 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
         QPointF(windowWidth - 30, windowHeight - 60) // 右下
     };
 
+    //设置大小
     setSceneRect(0, 0, windowWidth, windowHeight);
 
+    //固定消息提示
     QGraphicsTextItem *playerInfoText;
     playerInfoText = new QGraphicsTextItem();
     playerInfoText->setDefaultTextColor(Qt::black);
@@ -31,10 +35,10 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     playerInfoText->setZValue(1); // 确保在前面
     playerInfoText->setPos(-50, -50); // 放在左上角
     addItem(playerInfoText);
-    // 初始化内容
-    playerInfoText->setPlainText("当前玩家: 玩家1");
+        // 初始化内容
+    playerInfoText->setPlainText(QString("当前玩家: 玩家1"));
 
-    // 缩放背景图以适配窗口
+    // 缩放背景图以适配窗口【放置桌子和桌球】
     QPixmap bg(":/assets/assets/table.png");
     QPixmap scaledBg = bg.scaled(windowWidth, windowHeight, Qt::KeepAspectRatioByExpanding, Qt::SmoothTransformation);
     table = addPixmap(scaledBg);
@@ -42,7 +46,7 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
     table->setPos(0, 0);  // 左上角对齐
     initBalls(); // 初始化球
 
-    // 初始化提示文字
+    // 初始化动态提示文字
     hintTextItem = new QGraphicsTextItem();
     hintTextItem->setDefaultTextColor(Qt::blue);
     hintTextItem->setFont(QFont("Arial", 24, QFont::Bold));
@@ -53,18 +57,25 @@ GameScene::GameScene(QObject *parent) : QGraphicsScene(parent) {
 
     hintAnimation = new QPropertyAnimation(hintTextItem, "opacity");
 
+    //游戏管理器
     gameManager = new GameManager(this);
 
     connect(gameManager, &GameManager::turnChanged, this, [=](PlayerTurn turn){
         qDebug() << "现在轮到玩家：" << (turn == Player1 ? "玩家1" : "玩家2");
-        showHint(QString("玩家%1回合").arg(turn == Player1 ? "1" : "2"),500);
-        playerInfoText->setPlainText(QString("当前玩家: %1").arg(turn == Player1 ? "玩家1" : "玩家2"));
+        showHint(QString("玩家%1回合,%2").arg(turn == Player1 ? "1" : "2").arg(gameManager->PlayerTypeToString(gameManager->currentPlayerType())),500);
+        playerInfoText->setPlainText(QString("当前玩家: %1")
+                                         .arg(turn == Player1 ? "玩家1" : "玩家2"));
     });
     connect(gameManager, &GameManager::gameOver, this, [=](PlayerTurn winner, QString reason){
         qDebug() << "🎉 游戏结束，" << (winner == Player1 ? "玩家1" : "玩家2") << " 获胜，原因：" << reason;
+        showHint(QString("游戏结束，%1获胜").arg(winner == Player1 ? "玩家1" : "玩家2"), 500);
+        QTimer::singleShot(1000, this, [=]() {  // 1秒后执行
+            showHint(QString("🎉游戏结束，%1获胜,请重启游戏").arg(winner == Player1 ? "玩家1" : "玩家2"), 500);
+            timer->stop();
+        });
     });
 }
-
+//初始化球
 void GameScene::initBalls() {
     const int originalWidth = 4551;
     const int originalHeight = 2570;
@@ -112,13 +123,13 @@ void GameScene::initBalls() {
         }
     }
 }
-
+//帧更新
 void GameScene::updatePhysics() {
     const qreal friction = 0.99;
     const qreal minSpeed = 0.1;
     const qreal maxCharge = 30.0;
 
-    bool allStopped = true; // 新增：标记所有球是否静止
+    bool allStopped = true; // 标记所有球是否静止
 
     // 处理蓄力
     if (isCharging) {
@@ -151,7 +162,7 @@ void GameScene::updatePhysics() {
     handleTurnChange(allStopped);
     update();
 }
-
+//墙碰撞
 void GameScene::checkWallCollision(Ball *ball) {
     QRectF bounds = sceneRect();
     QPointF pos = ball->pos();
@@ -183,7 +194,7 @@ void GameScene::checkWallCollision(Ball *ball) {
     ball->setPos(pos);
     ball->velocity = v;
 }
-
+//球碰撞
 void GameScene::handleBallCollisions() {
     for (int i = 0; i < balls.size(); ++i) {
         for (int j = i + 1; j < balls.size(); ++j) {
@@ -227,10 +238,16 @@ void GameScene::handleBallCollisions() {
 
                     if(!gameManager->firstHitRecorded && gameManager->currentPlayerType() != 0){
                         gameManager->firstHitRecorded = true;
-                        if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) != d->getType()){
-                            qDebug()<< "test" << c->getNumber();
-                            qDebug() << "test" << d->getNumber();
-                            foulOccurred = true;
+                        if ((gameManager->currentPlayerType() == Solid && gameManager->getSolidLeft() == 0) ||
+                            (gameManager->currentPlayerType() == Striped && gameManager->getStripedLeft() == 0)) {
+                            return;
+                        }
+                        else{
+                            if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) != d->getType()){
+                                qDebug()<< "test" << c->getNumber();
+                                qDebug() << "test" << d->getNumber();
+                                foulOccurred = true;
+                            }
                         }
                     }
                 }
@@ -238,8 +255,27 @@ void GameScene::handleBallCollisions() {
         }
     }
 }
-
+//鼠标
 void GameScene::mousePressEvent(QGraphicsSceneMouseEvent *event) {
+    if (isWaitingForCueBallPlacement) {
+        QRectF bounds = sceneRect();
+        QPointF newPos = event->scenePos();
+        qreal radius = cueBall->radius(); // 获取白球半径
+
+        // 👉 边界检查：限制白球中心必须在有效范围内
+        newPos.setX(qMax(bounds.left() + radius, qMin(newPos.x(), bounds.right() - radius)));  // X轴限制
+        newPos.setY(qMax(bounds.top() + radius, qMin(newPos.y(), bounds.bottom() - radius)));  // Y轴限制
+
+        // 设置白球位置（需减去半径，因为setPos通常是左上角坐标）
+        cueBall->setPos(newPos - QPointF(radius, radius));
+        cueBall->velocity = QPointF(0, 0);
+        isWaitingForCueBallPlacement = false;
+        cueBallInPocket = false;
+        foulOccurred = false;
+        update();
+        return;
+    }
+
     if (event->button() == Qt::RightButton) {
         // 右键取消蓄力
         isCharging = false;
@@ -280,16 +316,9 @@ void GameScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event) {
     isCharging = false;  // 释放蓄力
     update();
 }
-
+//辅助线力度
 void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     Q_UNUSED(rect);
-
-    // ✅ 临时绘制洞口位置（用于测试）
-    painter->setPen(QPen(Qt::green, 2));  // 绿色空心圆
-    for (const QPointF &pocket : pockets) {
-        painter->drawEllipse(pocket, 35, 35);  // 和 checkPockets 一致的口径
-    }
-
     if (!isCharging) return;  // 🧠 没在蓄力就别画任何辅助图层
 
     Ball *cue = cueBall;
@@ -314,7 +343,7 @@ void GameScene::drawForeground(QPainter *painter, const QRectF &rect) {
     painter->setBrush(Qt::blue);
     painter->drawRect(QRectF(barPos, QSizeF(chargeStrength / 20.0 * barW, barH)));
 }
-
+//进洞逻辑
 void GameScene::checkPockets() {
     const int pocketRadius = 35;
 
@@ -339,7 +368,7 @@ void GameScene::checkPockets() {
                     gameManager->assignBallType(ball->getNumber());
 
                     if(gameManager->PlayerTypeToString(gameManager->currentPlayerType()) == ball->getType() && !foulOccurred){
-                        qDebug()<< gameManager->PlayerTypeToString(gameManager->currentPlayerType()) ;
+                        qDebug()<< gameManager->PlayerTypeToString(gameManager->currentPlayerType());
                         gameManager->setLink(true);
                     }
 
@@ -355,7 +384,7 @@ void GameScene::checkPockets() {
         }
     }
 }
-
+//回合处理
 void GameScene::handleTurnChange(bool allStopped) {
     // 处理球移动状态
     if (!allStopped) {
@@ -367,22 +396,8 @@ void GameScene::handleTurnChange(bool allStopped) {
     if (wasMoving) {
         // 情况2：发生犯规（未记录第一击球或其它犯规）
         if (foulOccurred) {
-            if(gameManager->firstHitRecorded){
-                qDebug() << "犯规，打错球了";
-                showHint("犯规，打错球了",500);
-                QTimer::singleShot(1000, this, [=]() {
-                    gameManager->nextTurn(true); // 犯规换人
-                });
 
-                foulOccurred = false;
-                gameManager->firstHitRecorded = false;
-                wasMoving = false;
-                gameManager->setLink(true);
-
-                return;
-            }
-            else if(cueBallInPocket){
-
+            if(cueBallInPocket){
                 qDebug() << "犯规,白球进洞";
                 showHint("犯规，白球进洞，请下个玩家放置白球",500);
 
@@ -395,11 +410,26 @@ void GameScene::handleTurnChange(bool allStopped) {
                 wasMoving = false;
                 gameManager->setLink(true);
 
-                cueBall->setPos(1000 * sceneRect().width() / 4551.0,
-                                (1285 - cueBall->radius()) * sceneRect().height() / 2570.0);
+                // 进入等待放置状态
+                cueBallInPocket = false;
+                isWaitingForCueBallPlacement = true;
                 cueBall->velocity = QPointF(0, 0);
 
-                cueBallInPocket = false;
+
+                return;
+            }
+            else if(gameManager->firstHitRecorded){
+                qDebug() << "犯规，打错球了";
+                showHint("犯规，打错球了",500);
+                QTimer::singleShot(1000, this, [=]() {
+                    gameManager->nextTurn(true); // 犯规换人
+                });
+
+                foulOccurred = false;
+                gameManager->firstHitRecorded = false;
+                wasMoving = false;
+                gameManager->setLink(true);
+
                 return;
             }
             else{
@@ -432,7 +462,7 @@ void GameScene::handleTurnChange(bool allStopped) {
         wasMoving = false;
     }
 }
-
+//动态提示
 void GameScene::showHint(const QString &text, int duration) {
     hintTextItem->setPlainText(text);
     hintAnimation->stop();
@@ -452,4 +482,3 @@ void GameScene::showHint(const QString &text, int duration) {
         hintAnimation->start();
     });
 }
-

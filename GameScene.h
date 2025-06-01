@@ -26,6 +26,8 @@ public:
 
     void showHint(const QString &text, int duration);
 
+    bool isValidCueBallPosition(const QPointF &pos);
+
 protected:
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -56,6 +58,8 @@ private:
 
     QGraphicsTextItem *hintTextItem;
     QPropertyAnimation *hintAnimation;
+
+    bool isWaitingForCueBallPlacement = false;
 
 };
 

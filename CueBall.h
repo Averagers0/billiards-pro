@@ -9,5 +9,4 @@ public:
     int getNumber() const override;
 };
 
-
 #endif // CUEBALL_H
